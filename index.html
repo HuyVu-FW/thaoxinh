@@ -276,7 +276,8 @@
       if (parts.length < 2) return fullName;
       let last = parts.pop();
       let initials = parts.map(p => p.charAt(0).toUpperCase()).join(".");
-      return initials + ". " + last;
+      // return initials + ". " + last;
+      return fullName;
     }
 
     // --------- Tạo layout ----------
