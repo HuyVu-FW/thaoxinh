@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Sơ đồ lớp học</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <script>
+    //lay du lieu tu localStorage, 
+    if (localStorage.getItem('user') === null) {
+      window.location.href = 'login.html';
+ 
+    }
+  
+</script>
+
+  <style>
+    /* ---------- Giao diện màn hình ---------- */
+    body { 
+      background: white;
+      min-height: 100vh;
+      color: #333;
+    }
+    .main-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+    }
+    .board, .teacher, .door {
+      text-align: center; 
+      font-weight: bold; 
+      font-family: 'Arial', 'Times New Roman', serif;
+      padding: 15px; 
+      margin: 15px auto; 
+      border-radius: 8px;
+      border: 3px solid #000;
+      transition: transform 0.3s ease;
+      color: #000;
+      background: #fff;
+    }
+    .board:hover, .teacher:hover, .door:hover { transform: translateY(-2px); }
+    .board { font-size: 1.2em; }
+    .teacher { font-size: 1.1em; }
+    .door { font-size: 1.0em; }
+
+    .group { 
+      margin: 10px; 
+      padding: 15px; 
+      border: 2px solid #333; 
+      border-radius: 8px; 
+      min-width: 200px;
+      background: #ffffff;
+      transition: all 0.3s ease;
+    }
+    .group:hover { border-color: #2196f3; transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+
+    .desk { 
+      width: 180px; 
+      height: 90px; 
+      border: 3px solid #333; 
+      margin: 8px auto; 
+      border-radius: 8px;
+      display: flex; 
+      flex-direction: row;
+      align-items: center; 
+      justify-content: space-around; 
+      background: #ffffff;
+      position: relative;
+      transition: all 0.3s ease;
+      min-height: 90px;
+      padding: 8px;
+      gap: 5px;
+    }
+    .desk:hover { border-color: #000; background: #f5f5f5; }
+    .desk.has-student { background: #f9f9f9; border-color: #666; }
+    .desk.full { border-color: #000; background: #f0f0f0; }
+
+    .student { 
+      background: #ffffff;
+      border: 2px solid #000; 
+      border-radius: 4px; 
+      cursor: grab;
+      font-size: 0.8em; 
+      font-weight: bold; 
+      font-family: 'Arial', 'Times New Roman', serif;
+      padding: 4px 6px; 
+      text-align: center;
+      transition: all 0.3s ease;
+      max-width: 80px;
+      word-wrap: break-word;
+      line-height: 1.2;
+      color: #000;
+      margin: 0;
+      flex: 1;
+      min-height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .student:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .student:active { cursor: grabbing; }
+
+    #students { 
+      min-height: 200px; 
+      border: 3px dashed #2196f3; 
+      padding: 15px; 
+      border-radius: 10px; 
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .group-title { 
+      text-align: center; 
+      font-weight: bold; 
+      font-family: 'Arial', 'Times New Roman', serif;
+      margin-top: 10px; 
+      color: #000;
+      font-size: 1.1em;
+    }
+
+    .layout-controls, .group-controls {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .btn { margin: 3px; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+
+    .layout-option {
+      cursor: pointer; padding: 15px; margin: 5px; border: 2px solid #ddd; border-radius: 10px;
+      text-align: center; transition: all 0.3s ease; background: white;
+    }
+    .layout-option:hover { border-color: #2196f3; background: #e3f2fd; }
+    .layout-option.active { border-color: #2196f3; background: #2196f3; color: white; }
+
+    .desk-info {
+      position: absolute; top: -10px; right: -10px; background: #000; color: #fff; border-radius: 50%;
+      width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.8em; font-weight: bold; border: 2px solid #fff;
+    }
+
+    .custom-layout { display: none; margin-top: 15px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; background: #f9f9f9; }
+    .custom-layout.active { display: block; }
+
+    .pdf-loading {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8); color: white; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 9999; font-size: 1.2em;
+    }
+    .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #2196f3; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
+    /* ---------- Chế độ “in 1 hàng” cho Xuất PDF (áp dụng tạm thời qua class) ---------- */
+    #classroom.print-one-row { width: 192mm; max-width: 192mm; }
+    #classroom.print-one-row .groups-row {
+      display: flex !important; flex-wrap: nowrap !important; justify-content: space-between !important; gap: 0 !important;
+    }
+    #classroom.print-one-row .groups-row[data-ngroups="4"] > .group { flex: 0 0 24.5% !important; max-width: 24.5% !important; }
+    #classroom.print-one-row .groups-row[data-ngroups="6"] > .group { flex: 0 0 16.3% !important; max-width: 16.3% !important; }
+    #classroom.print-one-row .group { margin: 0 !important; padding: 8px !important; min-width: 0 !important; }
+    #classroom.print-one-row .desk { width: 100% !important; min-width: 0 !important; height: 60px !important; padding: 6px !important; }
+    #classroom.print-one-row .student { font-size: 0.75em !important; max-width: none !important; }
+    #classroom.print-one-row .desk-info { width: 18px !important; height: 18px !important; font-size: 0.65em !important; }
+  </style>
+</head>
+<body class="container-fluid py-4">
+  <div class="main-container p-4">
+    <h1 class="text-center mb-4" style="color: #2196f3; font-weight: bold;">📚 Sơ đồ lớp học thông minh</h1>
+
+    <!-- Chọn layout -->
+    <div class="layout-controls">
+      <h5 class="mb-3">🏫 Chọn kiểu sắp xếp lớp học:</h5>
+      <div class="row">
+        <div class="col-md-3">
+          <div class="layout-option" onclick="setLayout('groups4')" data-layout="groups4"><strong>4 Tổ</strong><br><small>Tùy chỉnh bàn/tổ</small></div>
+        </div>
+        <div class="col-md-3">
+          <div class="layout-option" onclick="setLayout('groups6')" data-layout="groups6"><strong>6 Tổ</strong><br><small>Tùy chỉnh bàn/tổ</small></div>
+        </div>
+        <div class="col-md-3">
+          <div class="layout-option" onclick="setLayout('rows')" data-layout="rows"><strong>Hàng dọc</strong><br><small>5 hàng x 4 cột</small></div>
+        </div>
+        <div class="col-md-3">
+          <div class="layout-option" onclick="setLayout('custom')" data-layout="custom"><strong>Tùy chỉnh</strong><br><small>Tự thiết kế</small></div>
+        </div>
+      </div>
+
+      <!-- Tùy chỉnh tổ -->
+      <div class="custom-layout" id="customLayout">
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Số tổ:</label>
+            <input type="number" id="numGroups" class="form-control" value="4" min="2" max="8">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Số bàn mỗi tổ:</label>
+            <input type="number" id="desksPerGroup" class="form-control" value="3" min="1" max="6">
+          </div>
+        </div>
+        <button class="btn btn-info mt-2" onclick="applyCustomLayout()">✨ Áp dụng</button>
+      </div>
+    </div>
+
+    <!-- Thống kê -->
+    <div class="group-controls">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="alert alert-info mb-2">
+            <strong>📊 Thống kê:</strong><br>
+            <span id="studentCount">0</span> học sinh | <span id="deskCount">0</span> bàn | <span id="emptySeats">0</span> chỗ trống
+          </div>
+        </div>
+        <div class="col-md-9">
+          <button class="btn btn-success" onclick="autoArrange()">🎯 Sắp xếp tự động</button>
+          <button class="btn btn-warning" onclick="randomSeat()">🎲 Xếp ngẫu nhiên</button>
+          <button class="btn btn-info" onclick="clearAllSeats()">🔄 Dọn chỗ ngồi</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nhập danh sách học sinh -->
+    <div class="mb-4">
+      <label class="form-label"><strong>📝 Nhập danh sách học sinh (mỗi dòng 1 tên):</strong></label>
+      <textarea id="studentInput" class="form-control" rows="4" placeholder="Ví dụ:&#10;Vũ Quang Huy&#10;Nguyễn Văn An&#10;Trần Thị Mai&#10;Lê Hoàng Nam"></textarea>
+      <div class="mt-3">
+        <button class="btn btn-primary" onclick="addStudents()">➕ Thêm học sinh</button>
+        <button class="btn btn-success" onclick="saveData()">💾 Lưu sơ đồ</button>
+        <button class="btn btn-danger" onclick="clearData()">🗑 Xóa tất cả</button>
+        <button class="btn btn-secondary" onclick="downloadPDF()">📄 Xuất PDF</button>
+        <button class="btn btn-outline-secondary" onclick="printDirect()">🖨️ In trực tiếp</button>
+      </div>
+    </div>
+
+    <!-- Danh sách học sinh chưa xếp chỗ -->
+    <div class="mb-4">
+      <h5>👥 Danh sách học sinh chưa xếp chỗ:</h5>
+      <div id="students"></div>
+    </div>
+
+    <!-- Layout lớp -->
+    <div id="classroom"></div>
+  </div>
+
+  <!-- PDF Loading overlay -->
+  <div id="pdfLoading" class="pdf-loading" style="display: none;">
+    <div class="spinner"></div>
+    <div>Đang tạo PDF...</div>
+    <small>Vui lòng đợi trong giây lát</small>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    // --------- Dữ liệu & tiện ích ---------
+    let appData = {
+      layout: 'groups4',
+      layoutConfig: {
+        groups4: { numGroups: 4, desksPerGroup: 3 },
+        groups6: { numGroups: 6, desksPerGroup: 2 },
+        custom:  { numGroups: 4, desksPerGroup: 3 }
+      },
+      students: [],
+      desks: {}
+    };
+    let currentLayout = 'groups4';
+
+    function shortName(fullName) {
+      let parts = fullName.trim().split(" ");
+      if (parts.length < 2) return fullName;
+      let last = parts.pop();
+      let initials = parts.map(p => p.charAt(0).toUpperCase()).join(".");
+      return initials + ". " + last;
+    }
+
+    // --------- Tạo layout ----------
+    function createLayout(layoutType) {
+      const classroom = document.getElementById('classroom');
+      let html = '<div class="door">🚪 CỬA RA VÀO</div>';
+
+      const config = appData.layoutConfig[layoutType] || appData.layoutConfig.groups4;
+
+      switch(layoutType) {
+        case 'groups4':
+        case 'groups6':
+        case 'custom':
+          html += `
+            <div class="row text-center">
+              <!-- Thêm 'groups-row' + data-ngroups để kiểm soát in 1 hàng -->
+              <div class="col-12 d-flex justify-content-between flex-wrap groups-row" data-ngroups="${config.numGroups}">
+                ${Array.from({length: config.numGroups}, (_, i) => config.numGroups - i).map(groupNum => `
+                  <div class="group" data-group="${groupNum}">
+                    ${Array.from({length: config.desksPerGroup}, (_, j) => j + 1).map(deskNum => `
+                      <div class="desk" data-desk="${groupNum}-${deskNum}">
+                        <div class="desk-info">0</div>
+                      </div>
+                    `).join('')}
+                    <div class="group-title">Tổ ${groupNum}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>`;
+          break;
+
+        case 'rows':
+          html += '<div class="row text-center"><div class="col-12">';
+          for(let row = 1; row <= 5; row++) {
+            html += '<div class="d-flex justify-content-center mb-2">';
+            for(let col = 1; col <= 4; col++) {
+              html += `
+                <div class="desk mx-2" data-desk="r${row}c${col}">
+                  <div class="desk-info">0</div>
+                </div>`;
+            }
+            html += '</div>';
+          }
+          html += '</div></div>';
+          break;
+      }
+
+      html += `
+        <div class="teacher">👩‍🏫 Bàn giáo viên</div>
+        <div class="board">📋 BẢNG</div>
+      `;
+
+      classroom.innerHTML = html;
+      setupDragDrop();
+      updateStats();
+    }
+
+    // --------- Chuyển layout ----------
+    function setLayout(layoutType) {
+      const currentStudents = [];
+      document.querySelectorAll('.student').forEach(student => {
+        currentStudents.push({
+          name: student.dataset.fullname,
+          isInDesk: student.parentElement.classList.contains('desk')
+        });
+      });
+
+      currentLayout = layoutType;
+
+      document.querySelectorAll('.custom-layout').forEach(el => el.classList.remove('active'));
+      if (layoutType === 'custom' || layoutType === 'groups4' || layoutType === 'groups6') {
+        document.getElementById('customLayout').classList.add('active');
+        if (layoutType !== 'custom') {
+          document.getElementById('numGroups').value = appData.layoutConfig[layoutType].numGroups;
+          document.getElementById('desksPerGroup').value = appData.layoutConfig[layoutType].desksPerGroup;
+        }
+      }
+
+      createLayout(layoutType);
+
+      document.querySelectorAll('.layout-option').forEach(option => option.classList.remove('active'));
+      const activeOption = document.querySelector(`[data-layout="${layoutType}"]`);
+      if (activeOption) activeOption.classList.add('active');
+
+      currentStudents.forEach(student => addStudentElement(student.name));
+      saveData();
+    }
+
+    // --------- Tùy chỉnh layout ----------
+    function applyCustomLayout() {
+      const numGroups = parseInt(document.getElementById('numGroups').value);
+      const desksPerGroup = parseInt(document.getElementById('desksPerGroup').value);
+      appData.layoutConfig.custom = { numGroups, desksPerGroup };
+      if (currentLayout === 'groups4') appData.layoutConfig.groups4 = { numGroups, desksPerGroup };
+      if (currentLayout === 'groups6') appData.layoutConfig.groups6 = { numGroups, desksPerGroup };
+      setLayout(currentLayout);
+    }
+
+    // --------- Học sinh ----------
+    function addStudents() {
+      let input = document.getElementById("studentInput").value.trim();
+      if (!input) return;
+      let names = input.split("\n").map(n => n.trim()).filter(n => n);
+      names.forEach(name => addStudentElement(name));
+      document.getElementById("studentInput").value = "";
+      updateStats();
+      saveData();
+    }
+
+    function addStudentElement(name, deskSelector = null) {
+      const existingStudent = document.querySelector(`[data-fullname="${name}"]`);
+      if (existingStudent) {
+        const oldDesk = existingStudent.parentElement;
+        if (oldDesk && oldDesk.classList.contains('desk')) updateDeskStatus(oldDesk);
+        existingStudent.remove();
+      }
+
+      let div = document.createElement("div");
+      div.className = "student";
+      div.draggable = true;
+      div.dataset.fullname = name;
+
+      if (deskSelector) {
+        let desk = document.querySelector(deskSelector);
+        if (desk && desk.querySelectorAll('.student').length < 2) {
+          desk.appendChild(div);
+          div.textContent = shortName(name);
+          updateDeskStatus(desk);
+        } else {
+          document.getElementById("students").appendChild(div);
+          div.textContent = name;
+        }
+      } else {
+        document.getElementById("students").appendChild(div);
+        div.textContent = name;
+      }
+
+      updateStats();
+    }
+
+    function updateDeskStatus(desk) {
+      const students = desk.querySelectorAll('.student');
+      const info = desk.querySelector('.desk-info');
+      const count = students.length;
+      if (info) info.textContent = count;
+
+      desk.classList.remove('has-student', 'full');
+      if (count === 1) desk.classList.add('has-student');
+      else if (count >= 2) desk.classList.add('full');
+    }
+
+    function setupDragDrop() {
+      document.addEventListener('dragstart', function(e) {
+        if (e.target.classList.contains('student')) {
+          e.dataTransfer.setData("text", e.target.dataset.fullname);
+        }
+      });
+
+      document.querySelectorAll(".desk, #students").forEach(el => {
+        el.addEventListener("dragover", e => e.preventDefault());
+        el.addEventListener("drop", e => {
+          e.preventDefault();
+          let name = e.dataTransfer.getData("text");
+          let student = document.querySelector(`[data-fullname="${name}"]`);
+          if (student && e.currentTarget !== student.parentElement) {
+            const oldDesk = student.parentElement;
+            if (e.currentTarget.classList.contains('desk')) {
+              const currentStudents = e.currentTarget.querySelectorAll('.student');
+              if (currentStudents.length >= 2) { alert('Bàn này đã đủ 2 học sinh!'); return; }
+            }
+            e.currentTarget.appendChild(student);
+            if (e.currentTarget.classList.contains("desk")) {
+              student.textContent = shortName(name);
+              updateDeskStatus(e.currentTarget);
+            } else {
+              student.textContent = name;
+            }
+            if (oldDesk && oldDesk.classList.contains('desk')) updateDeskStatus(oldDesk);
+            updateStats(); saveData();
+          }
+        });
+      });
+    }
+
+    // --------- Sắp xếp ----------
+    function autoArrange() {
+      const allStudents = [...document.querySelectorAll('.student')];
+      const allDesks = [...document.querySelectorAll('.desk')];
+      allStudents.forEach(student => { document.getElementById('students').appendChild(student); student.textContent = student.dataset.fullname; });
+      allDesks.forEach(updateDeskStatus);
+      let idx = 0;
+      allDesks.forEach(desk => {
+        let d = 0;
+        while (d < 2 && idx < allStudents.length) {
+          desk.appendChild(allStudents[idx]);
+          allStudents[idx].textContent = shortName(allStudents[idx].dataset.fullname);
+          idx++; d++;
+        }
+        updateDeskStatus(desk);
+      });
+      updateStats(); saveData();
+    }
+
+    function randomSeat() {
+      const allStudents = [...document.querySelectorAll('.student')];
+      const allDesks = [...document.querySelectorAll('.desk')];
+      allStudents.forEach(student => { document.getElementById('students').appendChild(student); student.textContent = student.dataset.fullname; });
+      allDesks.forEach(updateDeskStatus);
+      const shuffled = allStudents.sort(() => Math.random() - 0.5);
+      let idx = 0;
+      allDesks.forEach(desk => {
+        let d = 0;
+        while (d < 2 && idx < shuffled.length) {
+          desk.appendChild(shuffled[idx]);
+          shuffled[idx].textContent = shortName(shuffled[idx].dataset.fullname);
+          idx++; d++;
+        }
+        updateDeskStatus(desk);
+      });
+      updateStats(); saveData();
+    }
+
+    function clearAllSeats() {
+      document.querySelectorAll('.desk .student').forEach(student => {
+        document.getElementById('students').appendChild(student);
+        student.textContent = student.dataset.fullname;
+      });
+      document.querySelectorAll('.desk').forEach(updateDeskStatus);
+      updateStats(); saveData();
+    }
+
+    // --------- Thống kê / Lưu / Load ----------
+    function updateStats() {
+      const totalStudents = document.querySelectorAll('.student').length;
+      const totalDesks = document.querySelectorAll('.desk').length;
+      const occupiedSeats = document.querySelectorAll('.desk .student').length;
+      const emptySeats = (totalDesks * 2) - occupiedSeats;
+      document.getElementById('studentCount').textContent = totalStudents;
+      document.getElementById('deskCount').textContent = totalDesks;
+      document.getElementById('emptySeats').textContent = emptySeats;
+    }
+    function saveData() {
+      appData.layout = currentLayout; appData.students = []; appData.desks = {};
+      document.querySelectorAll("#students .student").forEach(s => appData.students.push(s.dataset.fullname));
+      document.querySelectorAll(".desk").forEach((desk) => {
+        const students = desk.querySelectorAll('.student');
+        if (students.length > 0) {
+          const deskId = desk.dataset.desk; appData.desks[deskId] = [];
+          students.forEach(student => appData.desks[deskId].push(student.dataset.fullname));
+        }
+      });
+    }
+    function loadData() {
+      if (!appData) { setLayout('groups4'); return; }
+      setLayout(appData.layout || 'groups4');
+      if (appData.students) appData.students.forEach(name => addStudentElement(name));
+      if (appData.desks) {
+        Object.keys(appData.desks).forEach(deskId => {
+          const students = appData.desks[deskId];
+          students.forEach(name => addStudentElement(name, `[data-desk="${deskId}"]`));
+        });
+      }
+      updateStats();
+    }
+    function clearData() {
+      if (confirm('Bạn có chắc muốn xóa tất cả dữ liệu?')) {
+        appData = {
+          layout: 'groups4',
+          layoutConfig: {
+            groups4: { numGroups: 4, desksPerGroup: 3 },
+            groups6: { numGroups: 6, desksPerGroup: 2 },
+            custom:  { numGroups: 4, desksPerGroup: 3 }
+          },
+          students: [], desks: {}
+        };
+        location.reload();
+      }
+    }
+
+    // --------- In / PDF ----------
+    function printDirect() {
+      try { window.print(); }
+      catch (error) { console.error('Lỗi khi in:', error); alert('❌ Có lỗi xảy ra khi in. Vui lòng thử lại!'); }
+    }
+
+    async function downloadPDF() {
+      const loadingDiv = document.getElementById('pdfLoading');
+      loadingDiv.style.display = 'flex';
+      try {
+        if (typeof html2canvas === 'undefined') throw new Error('Thư viện html2canvas chưa được tải');
+        if (typeof window.jspdf === 'undefined') throw new Error('Thư viện jsPDF chưa được tải');
+        const { jsPDF } = window.jspdf;
+
+        // Bật chế độ bố cục 1 hàng trước khi chụp
+        const classroom = document.getElementById("classroom");
+        classroom.classList.add('print-one-row');
+
+        // Hỏi orientation
+        const isLandscape = confirm("Chọn hướng in:\n- OK: In ngang (Landscape)\n- Cancel: In dọc (Portrait)");
+        const orientation = isLandscape ? 'landscape' : 'portrait';
+
+        // Chụp canvas (đã ở bố cục 1 hàng) với cơ chế fallback nếu FO bị trắng
+        const baseOptions = {
+          scale: Math.min(2, window.devicePixelRatio || 1.5),
+          backgroundColor: '#ffffff',
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          onclone: (doc) => {
+            const classroomClone = doc.getElementById('classroom');
+            if (classroomClone) {
+              classroomClone.classList.add('print-one-row');
+              classroomClone.style.width = '1600px';
+              classroomClone.style.maxWidth = 'none';
+              classroomClone.style.background = '#ffffff';
+            }
+            const fixColors = doc.createElement('style');
+            fixColors.textContent = `
+              :root {
+                --bs-primary: #0d6efd;
+                --bs-primary-rgb: 13,110,253;
+                --bs-secondary: #6c757d;
+                --bs-success: #198754;
+                --bs-info: #0dcaf0;
+                --bs-warning: #ffc107;
+                --bs-danger: #dc3545;
+                --bs-light: #f8f9fa;
+                --bs-dark: #212529;
+                --bs-body-bg: #ffffff;
+                --bs-body-color: #212529;
+                --bs-border-color: #dee2e6;
+                --bs-link-color: #0d6efd;
+                --bs-link-hover-color: #0a58ca;
+                color-scheme: light;
+              }
+              .main-container { backdrop-filter: none !important; }
+              #pdfLoading { display: none !important; }
+            `;
+            doc.head.appendChild(fixColors);
+          }
+        };
+
+        const tryCapture = async (useFO) => html2canvas(classroom, { ...baseOptions, foreignObjectRendering: useFO });
+
+        let canvas;
+        try {
+          canvas = await tryCapture(false);
+          if (!canvas || canvas.width <= 1 || canvas.height <= 1) throw new Error('Empty canvas without FO');
+        } catch (e1) {
+          console.warn('Capture without foreignObject failed/empty, retrying with FO', e1);
+          canvas = await tryCapture(true);
+        }
+
+        // Tắt chế độ bố cục 1 hàng sau khi chụp (phục hồi màn hình)
+        classroom.classList.remove('print-one-row');
+
+        const pdf = new jsPDF({ orientation, unit: "mm", format: "a4" });
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        pdf.setFontSize(18); pdf.text("SƠ ĐỒ LỚP HỌC", pdfWidth / 2, 15, { align: "center" });
+        pdf.setFontSize(10); const today = new Date().toLocaleDateString('vi-VN'); pdf.text(`Ngày: ${today}`, 15, pdfHeight - 10);
+
+        const imgWidth = canvas.width, imgHeight = canvas.height;
+        const ratio = Math.min((pdfWidth - 30) / (imgWidth * 0.264583), (pdfHeight - 40) / (imgHeight * 0.264583));
+        const finalWidth = imgWidth * ratio * 0.264583;
+        const finalHeight = imgHeight * ratio * 0.264583;
+        const x = (pdfWidth - finalWidth) / 2;
+        const y = 25;
+
+        const imgData = canvas.toDataURL("image/png");
+        pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
+
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_');
+        const fileName = `so_do_lop_${orientation}_${timestamp}.pdf`;
+        pdf.save(fileName);
+
+        loadingDiv.style.display = 'none';
+        showNotification('✅ Xuất PDF thành công!', 'success');
+      } catch (error) {
+        console.error('Lỗi khi tạo PDF:', error);
+        loadingDiv.style.display = 'none';
+        let errorMsg = 'Không thể tạo PDF. ';
+        if (error.message.includes('html2canvas')) errorMsg += 'Lỗi chụp màn hình.';
+        else if (error.message.includes('jsPDF')) errorMsg += 'Lỗi tạo file PDF.';
+        else if (error.message.includes('thư viện')) errorMsg += 'Thư viện chưa sẵn sàng.';
+        else errorMsg += error.message;
+        errorMsg += '\n\n💡 Hãy thử "In trực tiếp" rồi lưu thành PDF!';
+        showNotification(errorMsg, 'error');
+      }
+    }
+
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      const bgColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3';
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; background: ${bgColor}; color: white;
+        padding: 15px 25px; border-radius: 8px; font-weight: bold; z-index: 10000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-width: 300px; white-space: pre-line;`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => { if (document.body.contains(notification)) document.body.removeChild(notification); }, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      let checkCount = 0;
+      const checkLibraries = () => {
+        checkCount++;
+        if (typeof html2canvas !== 'undefined' && typeof window.jspdf !== 'undefined') {
+          console.log('✅ Tất cả thư viện đã sẵn sàng');
+        } else if (checkCount < 20) {
+          setTimeout(checkLibraries, 500);
+        } else {
+          console.warn('⚠️ Một số thư viện có thể chưa được tải đầy đủ');
+        }
+      };
+      checkLibraries();
+      loadData();
+    });
+
+    // ---------- CSS in ấn (A4 & ép 1 hàng) chèn động ----------
+    const printCSS = `
+      @media print {
+        @page { size: A4; margin: 8mm; }
+
+        html, body { background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        #pdfLoading { display: none !important; }
+
+        body * { visibility: hidden; }
+        #classroom, #classroom * { visibility: visible; }
+
+        /* Khung in: đủ rộng A4 trừ lề, không tuyệt đối để tránh tràn trang */
+        #classroom {
+          position: static !important;
+          width: 192mm !important;
+          max-width: 192mm !important;
+          margin: 0 auto !important;
+          background: #ffffff !important;
+          height: auto !important;
+          overflow: visible !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+
+        /* Xóa gutter/margin bootstrap để tránh đội chiều rộng */
+        #classroom .row, #classroom .col-12 { margin: 0 !important; padding: 0 !important; }
+
+        /* DÀN 1 HÀNG: không bao giờ xuống dòng */
+        #classroom .groups-row {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          justify-content: space-between !important;
+          gap: 0 !important;
+        }
+
+        /* Mặc định 4 tổ: 4 cột bằng nhau */
+        #classroom .groups-row[data-ngroups="4"] > .group {
+          flex: 0 0 24.5% !important;
+          max-width: 24.5% !important;
+        }
+
+        /* Nếu chọn 6 tổ: vẫn 1 hàng (ô nhỏ hơn) */
+        #classroom .groups-row[data-ngroups="6"] > .group {
+          flex: 0 0 16.3% !important;
+          max-width: 16.3% !important;
+        }
+
+        /* Thu gọn group/desk để đảm bảo vừa trang */
+        #classroom .group {
+          margin: 0 !important;
+          padding: 6px !important;
+          min-width: 0 !important;   /* BỎ min-width 200px khi in */
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          border-width: 2px !important;
+        }
+
+        #classroom .desk {
+          width: 100% !important;
+          min-width: 0 !important;
+          height: 60px !important;
+          margin: 4px 0 !important;
+          padding: 6px !important;
+          border-width: 2px !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+
+        #classroom .student { font-size: 0.75em !important; padding: 3px 5px !important; max-width: none !important; }
+        #classroom .desk-info { width: 18px !important; height: 18px !important; font-size: 0.65em !important; }
+
+        .main-container { background: #ffffff !important; box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; }
+
+        .door, .teacher, .board { font-size: 0.9em !important; padding: 6px !important; margin: 6px auto !important; }
+        .group-title { font-size: 0.9em !important; margin-top: 4px !important; }
+      }
+    `;
+    const style = document.createElement('style');
+    style.textContent = printCSS;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>
+
